@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply bg-white text-navy antialiased; font-feature-settings: "ss01"; }
+  h1, h2, h3, h4 { @apply font-extrabold tracking-tight text-navy; text-wrap: balance; }
+  p { text-wrap: pretty; }
+  a { @apply underline-offset-4; }
+  :focus-visible { @apply outline-none ring-2 ring-teal-deep ring-offset-2; }
+  ::selection { background: #00C2B833; }
+}
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[15px] font-semibold transition-colors duration-150 no-underline; }
+  .btn-primary { @apply btn bg-navy text-white hover:bg-navy-700; }
+  .btn-coral { @apply btn bg-coral text-navy hover:bg-[#ff8576]; }
+  .btn-outline { @apply btn border border-navy/20 bg-white text-navy hover:border-navy/50; }
+  .btn-ghost-light { @apply btn border border-white/30 text-white hover:bg-white/10; }
+  .eyebrow { @apply text-[13px] font-bold uppercase tracking-[0.14em] text-teal-deep; }
+  .eyebrow-light { @apply text-[13px] font-bold uppercase tracking-[0.14em] text-teal; }
+  .card { @apply rounded-2xl border border-line bg-white p-6 shadow-card; }
+  .link { @apply font-semibold text-teal-deep underline decoration-teal/40 hover:decoration-teal-deep; }
+  .accent-bar { @apply h-1.5 w-full; background: linear-gradient(90deg, #00C2B8 0 50%, #FF6B5A 50% 100%); }
+  .field-label { @apply mb-1.5 block text-sm font-semibold text-navy; }
+  .field { @apply w-full rounded-xl border border-line bg-white px-4 py-3 text-[15px] text-navy placeholder:text-navy/40 focus:border-teal-deep focus:outline-none focus:ring-2 focus:ring-teal/30; }
+  .field-error { @apply mt-1 text-sm font-medium text-coral-deep; }
+}

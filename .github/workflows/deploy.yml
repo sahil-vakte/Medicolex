@@ -1,0 +1,86 @@
+name: CI and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: medicolex-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'http://92.205.160.39:8081' }}
+      NEXT_PUBLIC_GA_ID: ${{ vars.GA_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Smoke test production build
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          HOSTNAME=127.0.0.1 PORT=3000 DEPLOY_REVISION="$GITHUB_SHA" node .next/standalone/server.js > /tmp/medicolex.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          curl --fail --retry 20 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/api/health | grep "$GITHUB_SHA"
+          for path in / /contact /instruct /services /robots.txt /sitemap.xml; do
+            curl --fail --silent --output /dev/null "http://127.0.0.1:3000$path"
+          done
+      - name: Package release
+        run: tar -czf release.tar.gz -C .next/standalone .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.tar.gz
+          retention-days: 7
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL || 'http://92.205.160.39:8081' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+      - name: Configure SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Upload and activate release
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -o BatchMode=yes -o ConnectTimeout=20 release.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:/srv/medicolex/incoming/$GITHUB_SHA.tar.gz"
+          ssh -o BatchMode=yes -o ConnectTimeout=20 "$DEPLOY_USER@$DEPLOY_HOST" "/usr/local/bin/medicolex-deploy $GITHUB_SHA"
+      - name: Verify public release
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'http://92.205.160.39:8081' }}
+        run: |
+          curl --fail --retry 10 --retry-all-errors --retry-delay 3 "$SITE_URL/api/health" | grep "$GITHUB_SHA"
+          curl --fail --silent --output /dev/null "$SITE_URL/"

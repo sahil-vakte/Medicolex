@@ -1,0 +1,26 @@
+[Unit]
+Description=Medicolex website
+After=network.target
+
+[Service]
+Type=simple
+User=medicolex
+Group=medicolex
+WorkingDirectory=/srv/medicolex/current
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3035
+EnvironmentFile=/srv/medicolex/shared/app.env
+EnvironmentFile=/srv/medicolex/current/revision.env
+ExecStart=/opt/medicolex-node/bin/node server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/medicolex
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

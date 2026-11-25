@@ -15,6 +15,16 @@ npm run build && npm start   # production
 
 Requires Node.js 20 or later.
 
+## Hosting and automatic deployments
+
+- Preview: http://92.205.160.39:8081
+- Repository: https://github.com/sahil-vakte/Medicolex
+- Pipeline: https://github.com/sahil-vakte/Medicolex/actions
+- Push or merge application changes into `main` to build, test and deploy automatically. Pull requests run checks before merging.
+- Setup, rollback behavior, runtime configuration and domain connection instructions: [deployment guide](deploy/README.md).
+
+The local development server uses port 3000 by default and chooses the next available port if it is occupied.
+
 ## Where to add the missing details
 
 Everything that is still to be confirmed sits in **`lib/site.ts`**. Any value left as `null` is hidden automatically, so the site never shows a placeholder publicly.
@@ -37,7 +47,7 @@ All other page text (services, conditions, FAQs, insights articles, specialties)
 - **Enquiry forms** (contact, register interest, join panel) post to `/api/enquiry`.
 - Spam protection: honeypot field + simple per-IP rate limit.
 
-**Delivery:** set `FORM_WEBHOOK_URL` (HTTPS) and `FORM_WEBHOOK_SECRET`. Submissions are POSTed as `multipart/form-data` with an `x-medicolex-secret` header, ready to plug into your CRM, Zapier/Make or your own API. Without a webhook, only the reference number and field count are logged. Personal data is never written to logs.
+**Delivery:** set `FORM_WEBHOOK_URL` (HTTPS) and `FORM_WEBHOOK_SECRET`. Submissions are POSTed as `multipart/form-data` with an `x-medicolex-secret` header, ready to plug into your CRM, Zapier/Make or your own API. Without a webhook, development logs only the reference number and field count; production returns an error. Personal data is never written to logs.
 
 > **Medical records are special category data.** Whatever receives the webhook must store files encrypted, in the UK, with restricted access and a deletion schedule.
 

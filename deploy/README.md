@@ -1,6 +1,10 @@
 # Deployment
 
-Production preview: http://92.205.160.39:8081
+Website: https://medicolex.co.uk
+
+CRM: https://app.medicolex.co.uk
+
+The legacy IP preview redirects to the domains after cutover.
 
 Every push or merge to `main` runs `.github/workflows/deploy.yml`: install the locked dependencies, typecheck, build, smoke-test the production server, upload an artifact, deploy, and verify the public commit revision. Pull requests run build checks without deploying. Changes made by Claude, Codex or a person deploy when committed to `main`; changes on other branches need merging first. Manual runs are available from GitHub Actions.
 
@@ -29,3 +33,6 @@ Runtime configuration is in `/srv/medicolex/shared/app.env`. Set `FORM_WEBHOOK_U
 ## Initial setup
 
 An administrator can run `bootstrap.sh` with the other deployment files and an SSH public key named `deploy.pub` in the same directory. It installs the isolated Node runtime, account, service, restricted restart permission, Nginx listener and firewall rule. Configure GitHub secrets before pushing `main`. Server configuration files require administrator installation when edited; ordinary application changes deploy automatically.
+
+
+Domain cutover on 27 November 2026: `SITE_URL` is `https://medicolex.co.uk`; Nginx serves the website and CRM over HTTPS with automatic certificate renewal. `www.medicolex.co.uk` redirects to the apex domain. The CRM has its own service and preserves its existing SQLite data and encrypted storage.
